@@ -612,11 +612,11 @@
       keywordList.style.display = 'none';
       
       try {
-        const response = await fetch(`https://api.github.com/repos/${CONFIG.repo}/contents/keywords.json`, {
+        // 캐시 방지를 위해 타임스탬프 사용하며, CORS 에러 방지를 위해 Cache-Control 헤더 제거
+        const response = await fetch(`https://api.github.com/repos/${CONFIG.repo}/contents/keywords.json?t=${Date.now()}`, {
           headers: {
             'Authorization': `Bearer ${CONFIG.token}`,
-            'Accept': 'application/vnd.github.v3+json',
-            'Cache-Control': 'no-cache'
+            'Accept': 'application/vnd.github.v3+json'
           }
         });
         
