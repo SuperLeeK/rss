@@ -526,7 +526,7 @@
       setTimeout(() => {
         toast.classList.remove('active');
         setTimeout(() => toast.remove(), 300);
-      }, 3500);
+      }, 4000);
     }
 
     // 2. Overlay Loader Control
@@ -545,10 +545,10 @@
       const savedRepo = localStorage.getItem('github_repo');
       
       if (savedToken && savedRepo) {
-        CONFIG.token = savedToken;
-        CONFIG.repo = savedRepo;
+        CONFIG.token = savedToken.trim();
+        CONFIG.repo = savedRepo.trim();
         
-        repoInput.value = savedRepo;
+        repoInput.value = CONFIG.repo;
         tokenInput.value = '';
         
         tokenRow.style.display = 'none';
@@ -602,7 +602,7 @@
       try {
         const response = await fetch(`https://api.github.com/repos/${CONFIG.repo}/contents/keywords.json`, {
           headers: {
-            'Authorization': `token ${CONFIG.token}`,
+            'Authorization': `Bearer ${CONFIG.token}`,
             'Accept': 'application/vnd.github.v3+json',
             'Cache-Control': 'no-cache'
           }
@@ -617,7 +617,7 @@
         }
         
         if (!response.ok) {
-          throw new Error(`저장소 응답 오류 (${response.status})`);
+          throw new Error(`GitHub API HTTP ${response.status}`);
         }
         
         const data = await response.json();
@@ -631,7 +631,7 @@
         renderKeywords();
       } catch (error) {
         console.error(error);
-        showToast(`키워드를 로드하는 데 실패했습니다. 토큰 권한 및 저장소 명칭을 확인해 주세요.`, 'danger');
+        showToast(`키워드를 로드하는 데 실패했습니다: ${error.message} (토큰 권한 및 저장소 명칭 확인 필요)`, 'danger');
         loadingKeywords.style.display = 'none';
       }
     }
@@ -718,7 +718,7 @@
         const response = await fetch(`https://api.github.com/repos/${CONFIG.repo}/contents/keywords.json`, {
           method: 'PUT',
           headers: {
-            'Authorization': `token ${CONFIG.token}`,
+            'Authorization': `Bearer ${CONFIG.token}`,
             'Accept': 'application/vnd.github.v3+json',
             'Content-Type': 'application/json'
           },
@@ -726,7 +726,7 @@
         });
         
         if (!response.ok) {
-          throw new Error(`깃허브 커밋 실패 (${response.status})`);
+          throw new Error(`GitHub API HTTP ${response.status}`);
         }
         
         const resData = await response.json();
@@ -741,7 +741,7 @@
       } catch (error) {
         console.error(error);
         setOverlay(false);
-        showToast(`업데이트 중 에러가 발생했습니다. 권한 설정 또는 네트워크 상태를 확인하세요.`, 'danger');
+        showToast(`업데이트 에러: ${error.message} (토큰 권한 확인 필요)`, 'danger');
       }
     }
 
