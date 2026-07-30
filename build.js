@@ -3,6 +3,13 @@ import path from 'path';
 import { Feed } from 'feed';
 import { scrapeAagag } from './crawler.js';
 
+/**
+ * 파일 시스템 안전 문자열로 변환 (예: '/' 등을 '_'로 치환)
+ */
+function sanitizeFilename(name) {
+  return name.replace(/[\/\\:\*\?"<>\|]/g, '_');
+}
+
 async function build() {
   console.log('Starting RSS build process for all keywords...');
   
@@ -37,17 +44,20 @@ async function build() {
     try {
       const articles = await scrapeAagag(keyword);
       
+      const safeKeyword = sanitizeFilename(keyword);
+      const encodedSafeKeyword = encodeURIComponent(safeKeyword);
       const encodedKeyword = encodeURIComponent(keyword);
+      
       const feed = new Feed({
-        title: `AAGAG RSS Feed (${keyword})`,
-        description: `AAGAG 사이트의 검색어 "${keyword}" 결과 RSS 피드입니다.`,
+        title: `AAGAG 미러 RSS 피드 - ${keyword}`,
+        description: `AAGAG 미러 사이트의 검색어 "${keyword}" 결과 RSS 피드입니다.`,
         id: `https://aagag.com/mirror/?word=${encodedKeyword}`,
         link: `https://aagag.com/mirror/?word=${encodedKeyword}`,
         language: 'ko',
         generator: 'AAGAG RSS Generator',
         updated: new Date(),
         feedLinks: {
-          rss: `https://SuperLeeK.github.io/rss/aagag/${encodedKeyword}.xml`
+          rss: `https://SuperLeeK.github.io/rss/aagag/${encodedSafeKeyword}.xml`
         },
         author: {
           name: 'AAGAG RSS Bot'
@@ -65,13 +75,12 @@ async function build() {
 
       const xmlContent = feed.rss2();
       
-      // 파일 저장 경로: aagag/[키워드].xml
-      const outputPath = path.join(outputDir, `${keyword}.xml`);
+      // 파일 저장 경로: aagag/[안전한키워드].xml
+      const outputPath = path.join(outputDir, `${safeKeyword}.xml`);
       fs.writeFileSync(outputPath, xmlContent, 'utf-8');
       console.log(`Successfully generated RSS feed at: ${outputPath}`);
     } catch (error) {
       console.error(`Error building RSS feed for keyword "${keyword}":`, error);
-      // 특정 키워드 수집 실패 시 프로세스를 죽이지 않고 다음 키워드로 넘어감
     }
   }
   

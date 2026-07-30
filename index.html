@@ -662,6 +662,13 @@
       }
     }
 
+    /**
+     * 파일 시스템 안전 문자열로 변환 (예: '/' 등을 '_'로 치환)
+     */
+    function sanitizeFilename(name) {
+      return name.replace(/[\/\\:\*\?"<>\|]/g, '_');
+    }
+
     // 7. Render keywords in HTML
     function renderKeywords() {
       loadingKeywords.style.display = 'none';
@@ -688,8 +695,10 @@
         // 인코딩된 경로를 통해 정적 URL 매핑
         const owner = CONFIG.repo.split('/')[0];
         const repoName = CONFIG.repo.split('/')[1];
-        const encodedKw = encodeURIComponent(kw);
-        const rssUrl = `https://${owner}.github.io/${repoName}/aagag/${encodedKw}.xml`;
+        
+        const safeKw = sanitizeFilename(kw);
+        const encodedSafeKw = encodeURIComponent(safeKw);
+        const rssUrl = `https://${owner}.github.io/${repoName}/aagag/${encodedSafeKw}.xml`;
         
         item.innerHTML = `
           <div class="keyword-info">
@@ -699,7 +708,7 @@
                 <i class="fa-solid fa-link" style="font-size: 0.7rem; margin-right: 2px;"></i> ${rssUrl}
               </span>
               <span style="color: rgba(255,255,255,0.15)">|</span>
-              <span class="keyword-updated" id="updated-${encodedKw}">
+              <span class="keyword-updated" id="updated-${encodedSafeKw}">
                 <i class="fa-regular fa-clock" style="margin-right: 2px;"></i> 조회 중...
               </span>
             </div>
@@ -720,8 +729,9 @@
       
       // 각 키워드마다 최종 업데이트 시각을 비동기 조회하여 주입
       keywordListArray.forEach(async (kw) => {
-        const encodedKw = encodeURIComponent(kw);
-        const updatedEl = document.getElementById(`updated-${encodedKw}`);
+        const safeKw = sanitizeFilename(kw);
+        const encodedSafeKw = encodeURIComponent(safeKw);
+        const updatedEl = document.getElementById(`updated-${encodedSafeKw}`);
         
         const dateStr = await fetchLastUpdatedDate(kw);
         if (dateStr) {
@@ -735,9 +745,10 @@
     // 8. Fetch last commit date of the RSS file
     async function fetchLastUpdatedDate(keyword) {
       try {
-        const encodedKw = encodeURIComponent(keyword);
+        const safeKw = sanitizeFilename(keyword);
+        const encodedSafeKw = encodeURIComponent(safeKw);
         // 캐시를 방지하기 위해 타임스탬프 쿼리 매개변수 사용
-        const response = await fetch(`https://api.github.com/repos/${CONFIG.repo}/commits?path=aagag/${encodedKw}.xml&per_page=1&t=${Date.now()}`, {
+        const response = await fetch(`https://api.github.com/repos/${CONFIG.repo}/commits?path=aagag/${encodedSafeKw}.xml&per_page=1&t=${Date.now()}`, {
           headers: {
             'Authorization': `Bearer ${CONFIG.token}`,
             'Accept': 'application/vnd.github.v3+json'
