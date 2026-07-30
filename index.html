@@ -853,6 +853,14 @@
         return;
       }
       
+      // 특수문자 입력 제한 정규식 (한글 자/모음, 완성형 한글, 영문, 숫자, 공백, 하이픈, 언더바만 허용)
+      // 점(.)을 포함한 특수문자는 깃허브 페이지 배포 문제 및 파일 시스템 문제를 위해 원천 차단
+      const allowedPattern = /^[ㄱ-ㅎㅏ-ㅣ가-힣a-zA-Z0-9\s_-]+$/;
+      if (!allowedPattern.test(newKeyword)) {
+        showToast('키워드에는 한글, 영문, 숫자, 공백, 하이픈(-), 언더바(_)만 입력할 수 있습니다. (특수문자 제외)', 'danger');
+        return;
+      }
+      
       if (keywordListArray.includes(newKeyword)) {
         showToast('이미 등록된 키워드입니다.', 'danger');
         return;
