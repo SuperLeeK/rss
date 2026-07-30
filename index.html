@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AAGAG RSS 피드 관리자</title>
+  <title>Community RSS Portal Hub</title>
   <!-- Google Fonts & FontAwesome -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,16 +12,15 @@
   
   <style>
     :root {
-      --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
-      --card-bg: rgba(30, 41, 59, 0.7);
+      --bg-gradient: linear-gradient(135deg, #090d16 0%, #110e2e 100%);
+      --card-bg: rgba(30, 41, 59, 0.5);
       --card-border: rgba(255, 255, 255, 0.08);
       --neon-blue: #00f2fe;
       --neon-purple: #4facfe;
       --text-main: #f8fafc;
       --text-muted: #94a3b8;
       --accent: #6366f1;
-      --danger: #ef4444;
-      --success: #10b981;
+      --card-hover-border: rgba(99, 102, 241, 0.4);
     }
 
     * {
@@ -38,849 +37,234 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+      justify-content: center;
       padding: 2rem 1rem;
       overflow-x: hidden;
     }
 
-    /* Background Neon Orbs */
-    .orb-1 {
-      position: absolute;
-      width: 400px;
-      height: 400px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, rgba(0, 0, 0, 0) 70%);
-      top: -100px;
-      left: -100px;
-      z-index: -1;
-    }
-    .orb-2 {
+    /* Background Neon Glows */
+    .glow-1 {
       position: absolute;
       width: 500px;
       height: 500px;
       border-radius: 50%;
-      background: radial-gradient(circle, rgba(0, 242, 254, 0.1) 0%, rgba(0, 0, 0, 0) 70%);
-      bottom: -100px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, rgba(0, 0, 0, 0) 70%);
+      top: -200px;
+      left: -100px;
+      z-index: -1;
+    }
+    .glow-2 {
+      position: absolute;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0, 242, 254, 0.08) 0%, rgba(0, 0, 0, 0) 70%);
+      bottom: -200px;
       right: -100px;
       z-index: -1;
     }
 
     .container {
       width: 100%;
-      max-width: 680px;
+      max-width: 800px;
       z-index: 1;
+      text-align: center;
     }
 
     header {
-      text-align: center;
-      margin-bottom: 2.5rem;
+      margin-bottom: 3.5rem;
     }
 
     header h1 {
-      font-size: 2.2rem;
-      font-weight: 700;
+      font-size: 2.8rem;
+      font-weight: 800;
       background: linear-gradient(to right, var(--neon-blue), var(--neon-purple));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.75rem;
       letter-spacing: -0.05em;
     }
 
     header p {
       color: var(--text-muted);
-      font-size: 0.95rem;
+      font-size: 1.1rem;
+      font-weight: 300;
     }
 
-    /* Glassmorphism Card Style */
+    /* Grid Layout for Dashboard Cards */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 3rem;
+    }
+
     .card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
-      border-radius: 16px;
-      padding: 1.75rem;
+      border-radius: 20px;
+      padding: 2.25rem 2rem;
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
-      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
-      margin-bottom: 1.5rem;
+      box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.6);
+      text-align: left;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    /* Token Configuration Section */
-    .config-title {
-      font-size: 1.1rem;
-      font-weight: 600;
-      margin-bottom: 1rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-    .config-title i {
-      color: var(--neon-blue);
-    }
-
-    .form-group {
-      margin-bottom: 1rem;
-    }
-    .form-group label {
-      display: block;
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      margin-bottom: 0.4rem;
-      font-weight: 600;
-      letter-spacing: 0.05em;
-    }
-
-    .input-row {
-      display: flex;
-      gap: 0.5rem;
-    }
-
-    input[type="text"], input[type="password"] {
-      flex: 1;
-      background: rgba(15, 23, 42, 0.6);
-      border: 1px solid var(--card-border);
-      border-radius: 8px;
-      padding: 0.75rem 1rem;
-      color: var(--text-main);
-      font-family: inherit;
-      font-size: 0.9rem;
-      transition: all 0.2s ease;
-    }
-    input[type="text"]:focus, input[type="password"]:focus {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
-    }
-
-    button {
-      cursor: pointer;
-      font-family: inherit;
-      font-weight: 500;
-      font-size: 0.9rem;
-      padding: 0.75rem 1.25rem;
-      border-radius: 8px;
-      border: none;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, var(--neon-purple) 0%, var(--neon-blue) 100%);
-      color: #0f172a;
-      font-weight: 600;
-    }
-    .btn-primary:hover {
-      opacity: 0.9;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(0, 242, 254, 0.3);
-    }
-
-    .btn-secondary {
-      background: rgba(255, 255, 255, 0.08);
-      color: var(--text-main);
-      border: 1px solid var(--card-border);
-    }
-    .btn-secondary:hover {
-      background: rgba(255, 255, 255, 0.15);
-    }
-
-    .btn-danger {
-      background: rgba(239, 68, 68, 0.15);
-      color: var(--danger);
-      border: 1px solid rgba(239, 68, 68, 0.3);
-    }
-    .btn-danger:hover {
-      background: rgba(239, 68, 68, 0.25);
-    }
-
-    /* Keyword List Style */
-    .section-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.25rem;
-    }
-    .section-header h2 {
-      font-size: 1.15rem;
-      font-weight: 600;
-    }
-    .badge {
-      background: rgba(99, 102, 241, 0.2);
-      color: #a5b4fc;
-      font-size: 0.75rem;
-      padding: 0.2rem 0.5rem;
-      border-radius: 9999px;
-      font-weight: 600;
-    }
-
-    .keyword-list {
       display: flex;
       flex-direction: column;
-      gap: 0.75rem;
-    }
-
-    .keyword-item {
-      display: flex;
       justify-content: space-between;
-      align-items: center;
-      background: rgba(15, 23, 42, 0.4);
-      border: 1px solid rgba(255, 255, 255, 0.04);
-      padding: 0.9rem 1.2rem;
-      border-radius: 12px;
-      transition: all 0.2s ease;
-    }
-    .keyword-item:hover {
-      border-color: rgba(255, 255, 255, 0.1);
-      background: rgba(15, 23, 42, 0.5);
-    }
-
-    .keyword-info {
-      display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
-      max-width: 80%;
-    }
-    .keyword-name {
-      font-weight: 600;
-      font-size: 1rem;
-    }
-    .keyword-meta {
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      margin-top: 0.25rem;
-    }
-    .keyword-url {
-      white-space: nowrap;
+      position: relative;
       overflow: hidden;
-      text-overflow: ellipsis;
-      cursor: pointer;
-      max-width: 250px;
-    }
-    .keyword-url:hover {
-      color: var(--neon-blue);
-      text-decoration: underline;
-    }
-    .keyword-updated {
-      color: #a5b4fc;
-      font-weight: 500;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.25rem;
     }
 
-    .keyword-actions {
-      display: flex;
-      gap: 0.5rem;
-    }
-    .action-btn {
-      background: none;
-      border: none;
-      color: var(--text-muted);
-      font-size: 1rem;
-      padding: 0.4rem;
-      border-radius: 6px;
-      transition: all 0.15s ease;
-    }
-    .action-btn:hover {
-      color: var(--text-main);
-      background: rgba(255, 255, 255, 0.08);
-    }
-    .action-btn.delete-btn:hover {
-      color: var(--danger);
-      background: rgba(239, 68, 68, 0.1);
-    }
-
-    /* Loading Overlay & State */
-    .loading-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 3rem 0;
-      gap: 1rem;
-    }
-    .spinner {
-      width: 40px;
-      height: 40px;
-      border: 3px solid rgba(255, 255, 255, 0.1);
-      border-radius: 50%;
-      border-top-color: var(--neon-blue);
-      animation: spin 1s ease-in-out infinite;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    .overlay {
-      position: fixed;
+    .card::before {
+      content: '';
+      position: absolute;
       top: 0;
       left: 0;
       width: 100%;
-      height: 100%;
-      background: rgba(15, 23, 42, 0.85);
-      backdrop-filter: blur(8px);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      gap: 1.5rem;
-      z-index: 999;
-    }
-    .overlay.active {
-      display: flex;
-    }
-    .overlay-text {
-      font-size: 1.1rem;
-      font-weight: 500;
-      color: var(--text-main);
+      height: 4px;
+      background: linear-gradient(to right, var(--neon-blue), var(--neon-purple));
+      opacity: 0;
+      transition: opacity 0.3s ease;
     }
 
-    /* Toast Notification */
-    .toast-container {
-      position: fixed;
-      bottom: 2rem;
-      right: 2rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-      z-index: 1000;
-    }
-    .toast {
-      background: rgba(15, 23, 42, 0.95);
-      border: 1px solid var(--card-border);
-      border-left: 4px solid var(--accent);
-      padding: 1rem 1.5rem;
-      border-radius: 8px;
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
-      color: var(--text-main);
-      font-size: 0.88rem;
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      transform: translateY(100px);
-      opacity: 0;
-      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-    .toast.active {
-      transform: translateY(0);
+    .card:hover::before {
       opacity: 1;
     }
-    .toast.success { border-left-color: var(--success); }
-    .toast.danger { border-left-color: var(--danger); }
 
-    .empty-state {
-      text-align: center;
-      padding: 3rem 0;
+    /* Active Dashboard Card Hover */
+    .card.active:hover {
+      transform: translateY(-8px);
+      border-color: var(--card-hover-border);
+      box-shadow: 0 20px 40px -10px rgba(99, 102, 241, 0.3);
+      cursor: pointer;
+    }
+
+    .card.disabled {
+      opacity: 0.6;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1.5rem;
+    }
+
+    .card-icon {
+      font-size: 2.5rem;
+      background: linear-gradient(135deg, #a5b4fc, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .card.active .card-icon {
+      background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .badge {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.6rem;
+      border-radius: 9999px;
+      font-weight: 600;
+    }
+    .badge.active-badge {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .badge.disabled-badge {
+      background: rgba(255, 255, 255, 0.05);
       color: var(--text-muted);
-      font-size: 0.9rem;
-    }
-    .empty-state i {
-      font-size: 2rem;
-      margin-bottom: 0.75rem;
-      display: block;
-      color: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.1);
     }
 
-    /* Github Token Notice Box */
-    .notice-box {
-      background: rgba(99, 102, 241, 0.08);
-      border: 1px dashed rgba(99, 102, 241, 0.3);
-      border-radius: 8px;
-      padding: 0.9rem;
-      margin-top: 1rem;
-      font-size: 0.8rem;
-      color: #c7d2fe;
-      line-height: 1.4;
+    .card-body h3 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+      color: var(--text-main);
     }
-    .notice-box a {
+
+    .card-body p {
+      color: var(--text-muted);
+      font-size: 0.92rem;
+      line-height: 1.5;
+      margin-bottom: 2rem;
+    }
+
+    .card-footer {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      transition: color 0.2s ease;
+    }
+    .card.active:hover .card-footer {
       color: var(--neon-blue);
-      text-decoration: none;
     }
-    .notice-box a:hover {
-      text-decoration: underline;
+
+    footer {
+      color: rgba(255, 255, 255, 0.15);
+      font-size: 0.8rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      padding-top: 2rem;
+      width: 100%;
     }
   </style>
 </head>
 <body>
-  <div class="orb-1"></div>
-  <div class="orb-2"></div>
+  <div class="glow-1"></div>
+  <div class="glow-2"></div>
 
   <div class="container">
     <header>
-      <h1>AAGAG RSS Dashboard</h1>
-      <p>Github Pages 기반 다중 RSS 피드 수집 및 관리 도구</p>
+      <h1>Community RSS Portal</h1>
+      <p>구독 및 관리하고자 하는 커뮤니티의 RSS 대시보드를 선택해 주세요.</p>
     </header>
 
-    <!-- Token Configuration Card -->
-    <div class="card" id="configCard">
-      <div class="config-title">
-        <i class="fa-brands fa-github"></i>
-        <span>GitHub 저장소 인증 설정</span>
-      </div>
-      <div class="form-group">
-        <label>저장소 주소</label>
-        <div class="input-row">
-          <input type="text" id="repoInput" placeholder="username/repository (예: SuperLeeK/rss)" value="SuperLeeK/rss">
+    <div class="grid">
+      <!-- AAGAG Card (Active) -->
+      <div class="card active" onclick="location.href='./aagag/'">
+        <div>
+          <div class="card-header">
+            <div class="card-icon"><i class="fa-solid fa-square-rss"></i></div>
+            <span class="badge active-badge">운영 중</span>
+          </div>
+          <div class="card-body">
+            <h3>AAGAG RSS</h3>
+            <p>AAGAG 미러 게시판의 키워드 검색 결과를 실시간으로 모니터링하고 RSS 피드를 발급합니다.</p>
+          </div>
+        </div>
+        <div class="card-footer">
+          대시보드로 입장 <i class="fa-solid fa-arrow-right"></i>
         </div>
       </div>
-      <div class="form-group">
-        <label>GitHub Personal Access Token (PAT)</label>
-        <div class="input-row" id="tokenRow">
-          <input type="password" id="tokenInput" placeholder="github_pat_xxxx...">
-          <button class="btn-primary" id="saveConfigBtn">설정 저장</button>
+
+      <!-- Inven Card (Disabled Placeholder) -->
+      <div class="card disabled">
+        <div>
+          <div class="card-header">
+            <div class="card-icon"><i class="fa-solid fa-gamepad"></i></div>
+            <span class="badge disabled-badge">준비 중</span>
+          </div>
+          <div class="card-body">
+            <h3>Inven RSS</h3>
+            <p>인벤 자유게시판 및 특정 게임 게시판의 실시간 키워드 피드 자동 수집 대시보드입니다.</p>
+          </div>
         </div>
-        <div class="input-row" id="activeTokenRow" style="display: none;">
-          <input type="text" readonly value="••••••••••••••••••••••••••••••••" style="background: rgba(255, 255, 255, 0.03);">
-          <button class="btn-danger" id="resetConfigBtn">설정 초기화</button>
+        <div class="card-footer">
+          준비 중 <i class="fa-solid fa-lock" style="font-size: 0.8rem;"></i>
         </div>
-      </div>
-      <div class="notice-box">
-        <i class="fa-solid fa-circle-info"></i>
-        대시보드에서 키워드를 등록하면 깃허브 API를 이용해 저장소의 <code>keywords.json</code>을 직접 수정합니다. 
-        토큰에는 <strong>repo (또는 Contents: Write)</strong> 권한이 포함되어야 합니다. 
-        <a href="https://github.com/settings/tokens/new" target="_blank">토큰 생성하러 가기 <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
       </div>
     </div>
 
-    <!-- Keyword Management Card -->
-    <div class="card" id="managerCard" style="display: none;">
-      <div class="section-header">
-        <h2>수집 키워드 리스트</h2>
-        <span class="badge" id="keywordCount">0</span>
-      </div>
-
-      <!-- Keyword Add Form -->
-      <div class="form-group" style="margin-bottom: 1.5rem;">
-        <div class="input-row">
-          <input type="text" id="newKeywordInput" placeholder="새 수집 키워드 입력 (예: 유머, 인벤)">
-          <button class="btn-primary" id="addKeywordBtn"><i class="fa-solid fa-plus"></i> 추가</button>
-        </div>
-      </div>
-
-      <!-- Keywords Render Location -->
-      <div id="loadingKeywords" class="loading-container">
-        <div class="spinner"></div>
-        <p style="color: var(--text-muted); font-size: 0.85rem;">저장소에서 키워드 목록 로딩 중...</p>
-      </div>
-
-      <div class="keyword-list" id="keywordList" style="display: none;">
-        <!-- Javascript Renders Here -->
-      </div>
-    </div>
+    <footer>
+      <p>&copy; 2026 Community RSS Auto-Crawler Pipeline. All rights reserved.</p>
+    </footer>
   </div>
-
-  <!-- Fullscreen Loading Overlay -->
-  <div class="overlay" id="loadingOverlay">
-    <div class="spinner" style="width: 50px; height: 50px;"></div>
-    <div class="overlay-text" id="overlayText">깃허브 데이터 업데이트 중...</div>
-  </div>
-
-  <!-- Toast Toast Container -->
-  <div class="toast-container" id="toastContainer"></div>
-
-  <script>
-    const CONFIG = {
-      token: '',
-      repo: '',
-      sha: '' // keywords.json 파일의 Github SHA 식별값
-    };
-    
-    let keywordListArray = [];
-
-    // DOM Elements
-    const repoInput = document.getElementById('repoInput');
-    const tokenInput = document.getElementById('tokenInput');
-    const saveConfigBtn = document.getElementById('saveConfigBtn');
-    const resetConfigBtn = document.getElementById('resetConfigBtn');
-    const tokenRow = document.getElementById('tokenRow');
-    const activeTokenRow = document.getElementById('activeTokenRow');
-    
-    const managerCard = document.getElementById('managerCard');
-    const newKeywordInput = document.getElementById('newKeywordInput');
-    const addKeywordBtn = document.getElementById('addKeywordBtn');
-    const loadingKeywords = document.getElementById('loadingKeywords');
-    const keywordList = document.getElementById('keywordList');
-    const keywordCount = document.getElementById('keywordCount');
-    
-    const loadingOverlay = document.getElementById('loadingOverlay');
-    const overlayText = document.getElementById('overlayText');
-    const toastContainer = document.getElementById('toastContainer');
-
-    // Initialize Page
-    document.addEventListener('DOMContentLoaded', () => {
-      loadSavedConfig();
-      
-      saveConfigBtn.addEventListener('click', saveConfig);
-      resetConfigBtn.addEventListener('click', resetConfig);
-      addKeywordBtn.addEventListener('click', addNewKeyword);
-      
-      newKeywordInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') addNewKeyword();
-      });
-    });
-
-    // 1. Toast Notification Helper
-    function showToast(message, type = 'success') {
-      const toast = document.createElement('div');
-      toast.className = `toast ${type}`;
-      toast.innerHTML = `
-        <i class="fa-solid ${type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation'}"></i>
-        <span>${message}</span>
-      `;
-      toastContainer.appendChild(toast);
-      
-      setTimeout(() => toast.classList.add('active'), 50);
-      
-      setTimeout(() => {
-        toast.classList.remove('active');
-        setTimeout(() => toast.remove(), 300);
-      }, 4000);
-    }
-
-    // 2. Overlay Loader Control
-    function setOverlay(show, text = '깃허브 데이터 업데이트 중...') {
-      overlayText.textContent = text;
-      if (show) {
-        loadingOverlay.classList.add('active');
-      } else {
-        loadingOverlay.classList.remove('active');
-      }
-    }
-
-    // 3. Load configuration from LocalStorage
-    function loadSavedConfig() {
-      const savedToken = localStorage.getItem('github_token');
-      const savedRepo = localStorage.getItem('github_repo');
-      
-      if (savedToken && savedRepo) {
-        CONFIG.token = savedToken.trim();
-        CONFIG.repo = savedRepo.trim();
-        
-        repoInput.value = CONFIG.repo;
-        tokenInput.value = '';
-        
-        tokenRow.style.display = 'none';
-        activeTokenRow.style.display = 'flex';
-        managerCard.style.display = 'block';
-        
-        fetchKeywords();
-      }
-    }
-
-    // 4. Save configuration
-    function saveConfig() {
-      let repo = repoInput.value.trim();
-      const token = tokenInput.value.trim();
-      
-      if (!repo || !token) {
-        showToast('저장소 경로와 토큰을 모두 입력해 주세요.', 'danger');
-        return;
-      }
-      
-      // github URL 형식으로 입력한 경우 파싱해서 owner/repo만 추출
-      if (repo.includes('github.com')) {
-        const parts = repo.replace('https://github.com/', '')
-                          .replace('http://github.com/', '')
-                          .replace('git@github.com:', '')
-                          .replace('.git', '')
-                          .split('/');
-        if (parts.length >= 2) {
-          repo = `${parts[0]}/${parts[1]}`;
-        }
-      }
-      
-      localStorage.setItem('github_token', token);
-      localStorage.setItem('github_repo', repo);
-      
-      showToast('인증 설정이 저장되었습니다.');
-      loadSavedConfig();
-    }
-
-    // 5. Reset configuration
-    function resetConfig() {
-      localStorage.removeItem('github_token');
-      localStorage.removeItem('github_repo');
-      CONFIG.token = '';
-      CONFIG.repo = '';
-      CONFIG.sha = '';
-      
-      tokenRow.style.display = 'flex';
-      activeTokenRow.style.display = 'none';
-      managerCard.style.display = 'none';
-      keywordList.style.display = 'none';
-      keywordList.innerHTML = '';
-      keywordCount.textContent = '0';
-      
-      showToast('설정이 초기화되었습니다.');
-    }
-
-    // 6. Fetch keywords.json from GitHub Repo
-    async function fetchKeywords() {
-      loadingKeywords.style.display = 'flex';
-      keywordList.style.display = 'none';
-      
-      try {
-        // 캐시 방지를 위해 타임스탬프 사용하며, CORS 에러 방지를 위해 Cache-Control 헤더 제거
-        const response = await fetch(`https://api.github.com/repos/${CONFIG.repo}/contents/keywords.json?t=${Date.now()}`, {
-          headers: {
-            'Authorization': `Bearer ${CONFIG.token}`,
-            'Accept': 'application/vnd.github.v3+json'
-          }
-        });
-        
-        if (response.status === 404) {
-          // 파일이 아직 존재하지 않는 경우 빈 배열로 세팅 및 SHA 없음
-          keywordListArray = [];
-          CONFIG.sha = '';
-          renderKeywords();
-          return;
-        }
-        
-        if (!response.ok) {
-          throw new Error(`GitHub API HTTP ${response.status}`);
-        }
-        
-        const data = await response.json();
-        CONFIG.sha = data.sha;
-        
-        // Base64 디코딩 (한글 유니코드 지원 처리)
-        const utf8String = atob(data.content.replace(/\s/g, ''));
-        const decodeContent = decodeURIComponent(escape(utf8String));
-        
-        keywordListArray = JSON.parse(decodeContent);
-        renderKeywords();
-      } catch (error) {
-        console.error(error);
-        showToast(`키워드를 로드하는 데 실패했습니다: ${error.message} (토큰 권한 및 저장소 명칭 확인 필요)`, 'danger');
-        loadingKeywords.style.display = 'none';
-      }
-    }
-
-    /**
-     * 파일 시스템 안전 문자열로 변환 (예: '/' 등을 '_'로 치환)
-     */
-    function sanitizeFilename(name) {
-      return name.replace(/[\/\\:\*\?"<>\|]/g, '_');
-    }
-
-    // 7. Render keywords in HTML
-    function renderKeywords() {
-      loadingKeywords.style.display = 'none';
-      keywordList.innerHTML = '';
-      
-      if (keywordListArray.length === 0) {
-        keywordList.innerHTML = `
-          <div class="empty-state">
-            <i class="fa-solid fa-folder-open"></i>
-            등록된 키워드가 없습니다. 새 키워드를 추가해 보세요!
-          </div>
-        `;
-        keywordList.style.display = 'block';
-        keywordCount.textContent = '0';
-        return;
-      }
-      
-      keywordCount.textContent = keywordListArray.length;
-      
-      keywordListArray.forEach((kw) => {
-        const item = document.createElement('div');
-        item.className = 'keyword-item';
-        
-        // 인코딩된 경로를 통해 정적 URL 매핑
-        const owner = CONFIG.repo.split('/')[0];
-        const repoName = CONFIG.repo.split('/')[1];
-        
-        const safeKw = sanitizeFilename(kw);
-        const encodedSafeKw = encodeURIComponent(safeKw);
-        const rssUrl = `https://${owner}.github.io/${repoName}/aagag/${encodedSafeKw}.xml`;
-        
-        item.innerHTML = `
-          <div class="keyword-info">
-            <span class="keyword-name">${kw}</span>
-            <div class="keyword-meta">
-              <span class="keyword-url" onclick="copyToClipboard('${rssUrl}')" title="주소 복사하려면 클릭">
-                <i class="fa-solid fa-link" style="font-size: 0.7rem; margin-right: 2px;"></i> ${rssUrl}
-              </span>
-              <span style="color: rgba(255,255,255,0.15)">|</span>
-              <span class="keyword-updated" id="updated-${encodedSafeKw}">
-                <i class="fa-regular fa-clock" style="margin-right: 2px;"></i> 조회 중...
-              </span>
-            </div>
-          </div>
-          <div class="keyword-actions">
-            <button class="action-btn" onclick="copyToClipboard('${rssUrl}')" title="주소 복사">
-              <i class="fa-solid fa-copy"></i>
-            </button>
-            <button class="action-btn delete-btn" onclick="deleteKeyword('${kw}')" title="삭제">
-              <i class="fa-solid fa-trash-can"></i>
-            </button>
-          </div>
-        `;
-        keywordList.appendChild(item);
-      });
-      
-      keywordList.style.display = 'flex';
-      
-      // 각 키워드마다 최종 업데이트 시각을 비동기 조회하여 주입
-      keywordListArray.forEach(async (kw) => {
-        const safeKw = sanitizeFilename(kw);
-        const encodedSafeKw = encodeURIComponent(safeKw);
-        const updatedEl = document.getElementById(`updated-${encodedSafeKw}`);
-        
-        const dateStr = await fetchLastUpdatedDate(kw);
-        if (dateStr) {
-          updatedEl.innerHTML = `<i class="fa-regular fa-clock" style="margin-right: 2px;"></i> ${formatDate(dateStr)}`;
-        } else {
-          updatedEl.innerHTML = `<i class="fa-regular fa-clock" style="margin-right: 2px;"></i> 업데이트 대기 중`;
-        }
-      });
-    }
-
-    // 8. Fetch last commit date of the RSS file
-    async function fetchLastUpdatedDate(keyword) {
-      try {
-        const safeKw = sanitizeFilename(keyword);
-        const encodedSafeKw = encodeURIComponent(safeKw);
-        // 캐시를 방지하기 위해 타임스탬프 쿼리 매개변수 사용
-        const response = await fetch(`https://api.github.com/repos/${CONFIG.repo}/commits?path=aagag/${encodedSafeKw}.xml&per_page=1&t=${Date.now()}`, {
-          headers: {
-            'Authorization': `Bearer ${CONFIG.token}`,
-            'Accept': 'application/vnd.github.v3+json'
-          }
-        });
-        
-        if (!response.ok) {
-          return null;
-        }
-        
-        const commits = await response.json();
-        if (commits && commits.length > 0) {
-          return commits[0].commit.author.date; // ISO 8601 Date String
-        }
-        return null;
-      } catch (error) {
-        console.error(error);
-        return null;
-      }
-    }
-
-    // 9. Format ISO Date to YYYY.MM.DD_HH:mm:ss
-    function formatDate(isoString) {
-      const d = new Date(isoString);
-      if (isNaN(d.getTime())) return '형식 오류';
-      
-      const YYYY = d.getFullYear();
-      const MM = String(d.getMonth() + 1).padStart(2, '0');
-      const DD = String(d.getDate()).padStart(2, '0');
-      
-      const HH = String(d.getHours()).padStart(2, '0');
-      const mm = String(d.getMinutes()).padStart(2, '0');
-      const ss = String(d.getSeconds()).padStart(2, '0');
-      
-      return `${YYYY}.${MM}.${DD}_${HH}:${mm}:${ss}`;
-    }
-
-    // 10. Copy RSS Link to Clipboard
-    function copyToClipboard(text) {
-      navigator.clipboard.writeText(text).then(() => {
-        showToast('RSS 피드 링크가 클립보드에 복사되었습니다!');
-      }).catch(err => {
-        showToast('링크 복사에 실패했습니다.', 'danger');
-      });
-    }
-
-    // 11. Update keywords.json in Github (Core API logic)
-    async function updateGithubFile(newKeywords, successMessage) {
-      setOverlay(true, '깃허브 파일 업데이트 및 커밋 진행 중...');
-      
-      try {
-        // 한글 깨짐 방지를 위한 UTF-8 Base64 변환
-        const jsonString = JSON.stringify(newKeywords, null, 2);
-        const encodedContent = btoa(unescape(encodeURIComponent(jsonString)));
-        
-        const body = {
-          message: 'chore: update keywords.json via dashboard',
-          content: encodedContent
-        };
-        
-        // 기존 파일이 존재했었다면 SHA 식별값 추가 필수
-        if (CONFIG.sha) {
-          body.sha = CONFIG.sha;
-        }
-        
-        const response = await fetch(`https://api.github.com/repos/${CONFIG.repo}/contents/keywords.json`, {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${CONFIG.token}`,
-            'Accept': 'application/vnd.github.v3+json',
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(body)
-        });
-        
-        if (!response.ok) {
-          throw new Error(`GitHub API HTTP ${response.status}`);
-        }
-        
-        const resData = await response.json();
-        CONFIG.sha = resData.content.sha; // 새로운 SHA로 갱신
-        keywordListArray = newKeywords;
-        
-        setOverlay(false);
-        showToast(successMessage);
-        showToast('Github Actions 빌드가 트리거되었습니다. (배포 완료까지 약 2분 소요)', 'success');
-        
-        renderKeywords();
-      } catch (error) {
-        console.error(error);
-        setOverlay(false);
-        showToast(`업데이트 에러: ${error.message} (토큰 권한 확인 필요)`, 'danger');
-      }
-    }
-
-    // 12. Add New Keyword
-    function addNewKeyword() {
-      const newKeyword = newKeywordInput.value.trim();
-      
-      if (!newKeyword) {
-        showToast('추가할 키워드를 입력하세요.', 'danger');
-        return;
-      }
-      
-      // 특수문자 입력 제한 정규식 (한글 자/모음, 완성형 한글, 영문, 숫자, 공백, 하이픈, 언더바만 허용)
-      // 점(.)을 포함한 특수문자는 깃허브 페이지 배포 문제 및 파일 시스템 문제를 위해 원천 차단
-      const allowedPattern = /^[ㄱ-ㅎㅏ-ㅣ가-힣a-zA-Z0-9\s_-]+$/;
-      if (!allowedPattern.test(newKeyword)) {
-        showToast('키워드에는 한글, 영문, 숫자, 공백, 하이픈(-), 언더바(_)만 입력할 수 있습니다. (특수문자 제외)', 'danger');
-        return;
-      }
-      
-      if (keywordListArray.includes(newKeyword)) {
-        showToast('이미 등록된 키워드입니다.', 'danger');
-        return;
-      }
-      
-      const updatedKeywords = [...keywordListArray, newKeyword];
-      newKeywordInput.value = '';
-      
-      updateGithubFile(updatedKeywords, `"${newKeyword}" 키워드가 추가되었습니다!`);
-    }
-
-    // 13. Delete Keyword
-    function deleteKeyword(kw) {
-      if (!confirm(`"${kw}" 키워드 수집을 정말 중단하시겠습니까?\n연결된 RSS 피드 파일도 다음 빌드 때 더 이상 갱신되지 않습니다.`)) {
-        return;
-      }
-      
-      const updatedKeywords = keywordListArray.filter(item => item !== kw);
-      updateGithubFile(updatedKeywords, `` + `"${kw}" 키워드가 삭제되었습니다.`);
-    }
-  </script>
 </body>
 </html>
