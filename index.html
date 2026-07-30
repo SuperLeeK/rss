@@ -412,7 +412,7 @@
       <div class="form-group">
         <label>저장소 주소</label>
         <div class="input-row">
-          <input type="text" id="repoInput" placeholder="username/repository" value="SuperLeeK/rss">
+          <input type="text" id="repoInput" placeholder="username/repository (예: SuperLeeK/rss)" value="SuperLeeK/rss">
         </div>
       </div>
       <div class="form-group">
@@ -561,12 +561,24 @@
 
     // 4. Save configuration
     function saveConfig() {
-      const repo = repoInput.value.trim();
+      let repo = repoInput.value.trim();
       const token = tokenInput.value.trim();
       
       if (!repo || !token) {
         showToast('저장소 경로와 토큰을 모두 입력해 주세요.', 'danger');
         return;
+      }
+      
+      // github URL 형식으로 입력한 경우 파싱해서 owner/repo만 추출
+      if (repo.includes('github.com')) {
+        const parts = repo.replace('https://github.com/', '')
+                          .replace('http://github.com/', '')
+                          .replace('git@github.com:', '')
+                          .replace('.git', '')
+                          .split('/');
+        if (parts.length >= 2) {
+          repo = `${parts[0]}/${parts[1]}`;
+        }
       }
       
       localStorage.setItem('github_token', token);
