@@ -1,11 +1,16 @@
 import { chromium } from 'playwright';
 
 /**
- * AAGAG 미러 사이트에서 검색 결과를 크롤링하여 기사 목록을 반환합니다.
+ * AAGAG 미러 사이트에서 특정 키워드의 검색 결과를 크롤링하여 기사 목록을 반환합니다.
+ * @param {string} keyword 크롤링할 검색 키워드
  * @returns {Promise<Array<{title: string, link: string, id: string}>>}
  */
-export async function scrapeAagag() {
-  console.log('Starting Playwright crawler for AAGAG...');
+export async function scrapeAagag(keyword) {
+  if (!keyword) {
+    throw new Error('Keyword is required for scraping AAGAG');
+  }
+  
+  console.log(`Starting Playwright crawler for AAGAG with keyword: "${keyword}"`);
   const browser = await chromium.launch({
     headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox']
@@ -17,7 +22,8 @@ export async function scrapeAagag() {
     });
     const page = await context.newPage();
     
-    const targetUrl = 'https://aagag.com/mirror/?word=%E3%85%8E%E3%85%82';
+    const encodedKeyword = encodeURIComponent(keyword);
+    const targetUrl = `https://aagag.com/mirror/?word=${encodedKeyword}`;
     console.log(`Navigating to: ${targetUrl}`);
     
     await page.goto(targetUrl, {
