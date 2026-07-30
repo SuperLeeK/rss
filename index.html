@@ -246,17 +246,31 @@
       font-weight: 600;
       font-size: 1rem;
     }
-    .keyword-url {
+    .keyword-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
       font-size: 0.75rem;
       color: var(--text-muted);
+      margin-top: 0.25rem;
+    }
+    .keyword-url {
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       cursor: pointer;
+      max-width: 250px;
     }
     .keyword-url:hover {
       color: var(--neon-blue);
       text-decoration: underline;
+    }
+    .keyword-updated {
+      color: #a5b4fc;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
     }
 
     .keyword-actions {
@@ -680,9 +694,15 @@
         item.innerHTML = `
           <div class="keyword-info">
             <span class="keyword-name">${kw}</span>
-            <span class="keyword-url" onclick="copyToClipboard('${rssUrl}')" title="주소 복사하려면 클릭">
-              <i class="fa-solid fa-link" style="font-size: 0.7rem; margin-right: 2px;"></i> ${rssUrl}
-            </span>
+            <div class="keyword-meta">
+              <span class="keyword-url" onclick="copyToClipboard('${rssUrl}')" title="주소 복사하려면 클릭">
+                <i class="fa-solid fa-link" style="font-size: 0.7rem; margin-right: 2px;"></i> ${rssUrl}
+              </span>
+              <span style="color: rgba(255,255,255,0.15)">|</span>
+              <span class="keyword-updated" id="updated-${encodedKw}">
+                <i class="fa-regular fa-clock" style="margin-right: 2px;"></i> 조회 중...
+              </span>
+            </div>
           </div>
           <div class="keyword-actions">
             <button class="action-btn" onclick="copyToClipboard('${rssUrl}')" title="주소 복사">
@@ -697,9 +717,65 @@
       });
       
       keywordList.style.display = 'flex';
+      
+      // 각 키워드마다 최종 업데이트 시각을 비동기 조회하여 주입
+      keywordListArray.forEach(async (kw) => {
+        const encodedKw = encodeURIComponent(kw);
+        const updatedEl = document.getElementById(`updated-${encodedKw}`);
+        
+        const dateStr = await fetchLastUpdatedDate(kw);
+        if (dateStr) {
+          updatedEl.innerHTML = `<i class="fa-regular fa-clock" style="margin-right: 2px;"></i> ${formatDate(dateStr)}`;
+        } else {
+          updatedEl.innerHTML = `<i class="fa-regular fa-clock" style="margin-right: 2px;"></i> 업데이트 대기 중`;
+        }
+      });
     }
 
-    // 8. Copy RSS Link to Clipboard
+    // 8. Fetch last commit date of the RSS file
+    async function fetchLastUpdatedDate(keyword) {
+      try {
+        const encodedKw = encodeURIComponent(keyword);
+        // 캐시를 방지하기 위해 타임스탬프 쿼리 매개변수 사용
+        const response = await fetch(`https://api.github.com/repos/${CONFIG.repo}/commits?path=aagag/${encodedKw}.xml&per_page=1&t=${Date.now()}`, {
+          headers: {
+            'Authorization': `Bearer ${CONFIG.token}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
+        
+        if (!response.ok) {
+          return null;
+        }
+        
+        const commits = await response.json();
+        if (commits && commits.length > 0) {
+          return commits[0].commit.author.date; // ISO 8601 Date String
+        }
+        return null;
+      } catch (error) {
+        console.error(error);
+        return null;
+      }
+    }
+
+    // 9. Format ISO Date to YYYY.MM.DD_HH:mm:ss
+    function formatDate(isoString) {
+      const d = new Date(isoString);
+      if (isNaN(d.getTime())) return '형식 오류';
+      
+      const YYYY = d.getFullYear();
+      const MM = String(d.getMonth() + 1).padStart(2, '0');
+      const DD = String(d.getDate()).padStart(2, '0');
+      
+      const HH = String(d.getHours()).padStart(2, '0');
+      const mm = String(d.getMinutes()).padStart(2, '0');
+      const ss = String(d.getSeconds()).padStart(2, '0');
+      
+      return `${YYYY}.${MM}.${DD}_${HH}:${mm}:${ss}`;
+    }
+
+    // 10. Copy RSS Link to Clipboard
     function copyToClipboard(text) {
       navigator.clipboard.writeText(text).then(() => {
         showToast('RSS 피드 링크가 클립보드에 복사되었습니다!');
@@ -708,7 +784,7 @@
       });
     }
 
-    // 9. Update keywords.json in Github (Core API logic)
+    // 11. Update keywords.json in Github (Core API logic)
     async function updateGithubFile(newKeywords, successMessage) {
       setOverlay(true, '깃허브 파일 업데이트 및 커밋 진행 중...');
       
@@ -757,7 +833,7 @@
       }
     }
 
-    // 10. Add New Keyword
+    // 12. Add New Keyword
     function addNewKeyword() {
       const newKeyword = newKeywordInput.value.trim();
       
@@ -777,14 +853,14 @@
       updateGithubFile(updatedKeywords, `"${newKeyword}" 키워드가 추가되었습니다!`);
     }
 
-    // 11. Delete Keyword
+    // 13. Delete Keyword
     function deleteKeyword(kw) {
       if (!confirm(`"${kw}" 키워드 수집을 정말 중단하시겠습니까?\n연결된 RSS 피드 파일도 다음 빌드 때 더 이상 갱신되지 않습니다.`)) {
         return;
       }
       
       const updatedKeywords = keywordListArray.filter(item => item !== kw);
-      updateGithubFile(updatedKeywords, `"${kw}" 키워드가 삭제되었습니다.`);
+      updateGithubFile(updatedKeywords, `` + `"${kw}" 키워드가 삭제되었습니다.`);
     }
   </script>
 </body>
