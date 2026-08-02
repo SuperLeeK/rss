@@ -434,34 +434,31 @@
       <p>AAGAG 미러 검색 결과를 RSS 피드로 구독 및 관리합니다</p>
     </header>
 
-    <!-- Token Configuration Card -->
-    <div class="card" id="configCard">
-      <div class="config-title">
-        <i class="fa-brands fa-github"></i>
-        <span>GitHub 저장소 인증 설정</span>
-      </div>
-      <div class="form-group">
-        <label>저장소 주소</label>
-        <div class="input-row">
-          <input type="text" id="repoInput" placeholder="username/repository (예: SuperLeeK/rss)" value="SuperLeeK/rss">
+    <!-- Active Credentials Info Banner -->
+    <div class="card" id="credentialsInfoCard" style="display: none; padding: 1.2rem 1.5rem; margin-bottom: 1.5rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem;">
+        <div style="display: flex; align-items: center; gap: 0.6rem; color: var(--text-muted);">
+          <i class="fa-brands fa-github" style="color: var(--neon-blue); font-size: 1.2rem;"></i>
+          <span>연동 저장소: <strong id="connectedRepoName" style="color: var(--text-main);">SuperLeeK/rss</strong></span>
         </div>
+        <a href="../" style="color: var(--neon-blue); text-decoration: none; font-weight: 600; font-size: 0.85rem; display: flex; align-items: center; gap: 0.25rem;">
+          인증 설정 변경 <i class="fa-solid fa-arrow-up-right-from-square"></i>
+        </a>
       </div>
-      <div class="form-group">
-        <label>GitHub Personal Access Token (PAT)</label>
-        <div class="input-row" id="tokenRow">
-          <input type="password" id="tokenInput" placeholder="github_pat_xxxx...">
-          <button class="btn-primary" id="saveConfigBtn">설정 저장</button>
-        </div>
-        <div class="input-row" id="activeTokenRow" style="display: none;">
-          <input type="text" readonly value="••••••••••••••••••••••••••••••••" style="background: rgba(255, 255, 255, 0.03);">
-          <button class="btn-danger" id="resetConfigBtn">설정 초기화</button>
-        </div>
-      </div>
-      <div class="notice-box">
-        <i class="fa-solid fa-circle-info"></i>
-        대시보드에서 키워드를 등록하면 깃허브 API를 이용해 저장소의 <code>aagag/keywords.json</code>을 직접 수정합니다. 
-        토큰에는 <strong>repo (또는 Contents: Write)</strong> 권한이 포함되어야 합니다. 
-        <a href="https://github.com/settings/tokens/new" target="_blank">토큰 생성하러 가기 <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+    </div>
+
+    <!-- No Credentials Error Card -->
+    <div class="card" id="authErrorCard" style="display: none; text-align: center; padding: 3rem 2rem;">
+      <i class="fa-solid fa-triangle-exclamation" style="font-size: 3rem; color: var(--danger); margin-bottom: 1.5rem;"></i>
+      <h2 style="font-size: 1.4rem; margin-bottom: 0.75rem;">GitHub 인증 정보가 없습니다</h2>
+      <p style="color: var(--text-muted); line-height: 1.6; margin-bottom: 2rem; font-size: 0.95rem;">
+        AAGAG RSS 피드 관리를 하려면 GitHub Personal Access Token(PAT)과 저장소 인증 설정이 필요합니다. <br>
+        포털 메인 화면에서 설정을 완료한 후 대시보드에 입장해 주세요.
+      </p>
+      <div style="display: flex; justify-content: center;">
+        <a href="../" class="btn-primary" style="text-decoration: none; padding: 0.8rem 2rem; border-radius: 8px;">
+          <i class="fa-solid fa-arrow-left"></i> 포털 메인으로 가기
+        </a>
       </div>
     </div>
 
@@ -511,12 +508,9 @@
     let keywordListArray = [];
 
     // DOM Elements
-    const repoInput = document.getElementById('repoInput');
-    const tokenInput = document.getElementById('tokenInput');
-    const saveConfigBtn = document.getElementById('saveConfigBtn');
-    const resetConfigBtn = document.getElementById('resetConfigBtn');
-    const tokenRow = document.getElementById('tokenRow');
-    const activeTokenRow = document.getElementById('activeTokenRow');
+    const credentialsInfoCard = document.getElementById('credentialsInfoCard');
+    const connectedRepoName = document.getElementById('connectedRepoName');
+    const authErrorCard = document.getElementById('authErrorCard');
     
     const managerCard = document.getElementById('managerCard');
     const newKeywordInput = document.getElementById('newKeywordInput');
@@ -532,9 +526,6 @@
     // Initialize Page
     document.addEventListener('DOMContentLoaded', () => {
       loadSavedConfig();
-      
-      saveConfigBtn.addEventListener('click', saveConfig);
-      resetConfigBtn.addEventListener('click', resetConfig);
       addKeywordBtn.addEventListener('click', addNewKeyword);
       
       newKeywordInput.addEventListener('keypress', (e) => {
@@ -579,62 +570,24 @@
         CONFIG.token = savedToken.trim();
         CONFIG.repo = savedRepo.trim();
         
-        repoInput.value = CONFIG.repo;
-        tokenInput.value = '';
-        
-        tokenRow.style.display = 'none';
-        activeTokenRow.style.display = 'flex';
+        connectedRepoName.textContent = CONFIG.repo;
+        credentialsInfoCard.style.display = 'block';
+        authErrorCard.style.display = 'none';
         managerCard.style.display = 'block';
         
         fetchKeywords();
+      } else {
+        CONFIG.token = '';
+        CONFIG.repo = '';
+        CONFIG.sha = '';
+        
+        credentialsInfoCard.style.display = 'none';
+        authErrorCard.style.display = 'block';
+        managerCard.style.display = 'none';
+        keywordList.style.display = 'none';
+        keywordList.innerHTML = '';
+        keywordCount.textContent = '0';
       }
-    }
-
-    // 4. Save configuration
-    function saveConfig() {
-      let repo = repoInput.value.trim();
-      const token = tokenInput.value.trim();
-      
-      if (!repo || !token) {
-        showToast('저장소 경로와 토큰을 모두 입력해 주세요.', 'danger');
-        return;
-      }
-      
-      // github URL 형식으로 입력한 경우 파싱해서 owner/repo만 추출
-      if (repo.includes('github.com')) {
-        const parts = repo.replace('https://github.com/', '')
-                          .replace('http://github.com/', '')
-                          .replace('git@github.com:', '')
-                          .replace('.git', '')
-                          .split('/');
-        if (parts.length >= 2) {
-          repo = `${parts[0]}/${parts[1]}`;
-        }
-      }
-      
-      localStorage.setItem('github_token', token);
-      localStorage.setItem('github_repo', repo);
-      
-      showToast('인증 설정이 저장되었습니다.');
-      loadSavedConfig();
-    }
-
-    // 5. Reset configuration
-    function resetConfig() {
-      localStorage.removeItem('github_token');
-      localStorage.removeItem('github_repo');
-      CONFIG.token = '';
-      CONFIG.repo = '';
-      CONFIG.sha = '';
-      
-      tokenRow.style.display = 'flex';
-      activeTokenRow.style.display = 'none';
-      managerCard.style.display = 'none';
-      keywordList.style.display = 'none';
-      keywordList.innerHTML = '';
-      keywordCount.textContent = '0';
-      
-      showToast('설정이 초기화되었습니다.');
     }
 
     // 6. Fetch keywords.json from GitHub Repo (aagag/keywords.json 경로를 바라봄)

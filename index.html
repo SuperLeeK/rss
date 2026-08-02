@@ -21,6 +21,8 @@
       --text-muted: #94a3b8;
       --accent: #6366f1;
       --card-hover-border: rgba(99, 102, 241, 0.4);
+      --danger: #ef4444;
+      --success: #10b981;
     }
 
     * {
@@ -168,6 +170,8 @@
       padding: 0.25rem 0.6rem;
       border-radius: 9999px;
       font-weight: 600;
+      display: inline-flex;
+      align-items: center;
     }
     .badge.active-badge {
       background: rgba(16, 185, 129, 0.15);
@@ -179,6 +183,151 @@
       color: var(--text-muted);
       border: 1px solid rgba(255, 255, 255, 0.1);
     }
+    .badge.need-auth-badge {
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    .badge.ready-badge {
+      background: rgba(0, 242, 254, 0.15);
+      color: var(--neon-blue);
+      border: 1px solid rgba(0, 242, 254, 0.3);
+    }
+
+    /* Token Configuration Section */
+    .config-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .config-title i {
+      color: var(--neon-blue);
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    .form-group label {
+      display: block;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.4rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    input[type="text"], input[type="password"] {
+      flex: 1;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      color: var(--text-main);
+      font-family: inherit;
+      font-size: 0.9rem;
+      transition: all 0.2s ease;
+    }
+    input[type="text"]:focus, input[type="password"]:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    }
+
+    button {
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 500;
+      font-size: 0.9rem;
+      padding: 0.75rem 1.25rem;
+      border-radius: 8px;
+      border: none;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--neon-purple) 0%, var(--neon-blue) 100%);
+      color: #0f172a;
+      font-weight: 600;
+    }
+    .btn-primary:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 242, 254, 0.3);
+    }
+
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--danger);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    .btn-danger:hover {
+      background: rgba(239, 68, 68, 0.25);
+    }
+
+    /* Github Token Notice Box */
+    .notice-box {
+      background: rgba(99, 102, 241, 0.08);
+      border: 1px dashed rgba(99, 102, 241, 0.3);
+      border-radius: 8px;
+      padding: 0.9rem;
+      margin-top: 1rem;
+      font-size: 0.8rem;
+      color: #c7d2fe;
+      line-height: 1.4;
+    }
+    .notice-box a {
+      color: var(--neon-blue);
+      text-decoration: none;
+    }
+    .notice-box a:hover {
+      text-decoration: underline;
+    }
+
+    /* Toast Notification */
+    .toast-container {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      z-index: 1000;
+    }
+    .toast {
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid var(--card-border);
+      border-left: 4px solid var(--accent);
+      padding: 1rem 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+      color: var(--text-main);
+      font-size: 0.88rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .toast.active {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    .toast.success { border-left-color: var(--success); }
+    .toast.danger { border-left-color: var(--danger); }
 
     .card-body h3 {
       font-size: 1.35rem;
@@ -226,13 +375,44 @@
       <p>구독 및 관리하고자 하는 커뮤니티의 RSS 대시보드를 선택해 주세요.</p>
     </header>
 
+    <!-- Token Configuration Card -->
+    <div class="card" id="configCard" style="text-align: left; margin-bottom: 2.5rem;">
+      <div class="config-title">
+        <i class="fa-brands fa-github"></i>
+        <span>GitHub 저장소 인증 설정</span>
+      </div>
+      <div class="form-group">
+        <label>저장소 주소</label>
+        <div class="input-row">
+          <input type="text" id="repoInput" placeholder="username/repository (예: SuperLeeK/rss)" value="SuperLeeK/rss">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>GitHub Personal Access Token (PAT)</label>
+        <div class="input-row" id="tokenRow">
+          <input type="password" id="tokenInput" placeholder="github_pat_xxxx...">
+          <button class="btn-primary" id="saveConfigBtn">설정 저장</button>
+        </div>
+        <div class="input-row" id="activeTokenRow" style="display: none;">
+          <input type="text" readonly value="••••••••••••••••••••••••••••••••" style="background: rgba(255, 255, 255, 0.03);">
+          <button class="btn-danger" id="resetConfigBtn">설정 초기화</button>
+        </div>
+      </div>
+      <div class="notice-box">
+        <i class="fa-solid fa-circle-info"></i>
+        대시보드에서 키워드를 등록하면 깃허브 API를 이용해 저장소의 <code>aagag/keywords.json</code>을 직접 수정합니다. 
+        토큰에는 <strong>repo (또는 Contents: Write)</strong> 권한이 포함되어야 합니다. 
+        <a href="https://github.com/settings/tokens/new" target="_blank">토큰 생성하러 가기 <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+      </div>
+    </div>
+
     <div class="grid">
       <!-- AAGAG Card (Active) -->
-      <div class="card active" onclick="location.href='./aagag/'">
+      <div class="card active" id="aagagCard">
         <div>
           <div class="card-header">
             <div class="card-icon"><i class="fa-solid fa-square-rss"></i></div>
-            <span class="badge active-badge">운영 중</span>
+            <span class="badge" id="aagagBadge">인증 필요</span>
           </div>
           <div class="card-body">
             <h3>AAGAG RSS</h3>
@@ -266,5 +446,133 @@
       <p>&copy; 2026 Community RSS Auto-Crawler Pipeline. All rights reserved.</p>
     </footer>
   </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script>
+    // LocalStorage Configuration
+    const CONFIG = {
+      token: '',
+      repo: ''
+    };
+
+    // DOM Elements
+    const repoInput = document.getElementById('repoInput');
+    const tokenInput = document.getElementById('tokenInput');
+    const saveConfigBtn = document.getElementById('saveConfigBtn');
+    const resetConfigBtn = document.getElementById('resetConfigBtn');
+    const tokenRow = document.getElementById('tokenRow');
+    const activeTokenRow = document.getElementById('activeTokenRow');
+    
+    const aagagCard = document.getElementById('aagagCard');
+    const aagagBadge = document.getElementById('aagagBadge');
+    const toastContainer = document.getElementById('toastContainer');
+
+    // Page Load Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      loadSavedConfig();
+      
+      saveConfigBtn.addEventListener('click', saveConfig);
+      resetConfigBtn.addEventListener('click', resetConfig);
+      
+      aagagCard.addEventListener('click', () => {
+        if (CONFIG.token && CONFIG.repo) {
+          location.href = './aagag/';
+        } else {
+          showToast('저장소 인증 설정을 먼저 완료해 주세요.', 'danger');
+          tokenInput.focus();
+        }
+      });
+    });
+
+    // Toast Alert Helper
+    function showToast(message, type = 'success') {
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.innerHTML = `
+        <i class="fa-solid ${type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation'}"></i>
+        <span>${message}</span>
+      `;
+      toastContainer.appendChild(toast);
+      
+      setTimeout(() => toast.classList.add('active'), 50);
+      
+      setTimeout(() => {
+        toast.classList.remove('active');
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+
+    // Load Credentials from LocalStorage
+    function loadSavedConfig() {
+      const savedToken = localStorage.getItem('github_token');
+      const savedRepo = localStorage.getItem('github_repo');
+      
+      if (savedToken && savedRepo) {
+        CONFIG.token = savedToken.trim();
+        CONFIG.repo = savedRepo.trim();
+        
+        repoInput.value = CONFIG.repo;
+        tokenInput.value = '';
+        
+        tokenRow.style.display = 'none';
+        activeTokenRow.style.display = 'flex';
+        
+        // 뱃지 상태 변경
+        aagagBadge.className = 'badge ready-badge';
+        aagagBadge.textContent = '연동 완료';
+      } else {
+        CONFIG.token = '';
+        CONFIG.repo = '';
+        
+        tokenRow.style.display = 'flex';
+        activeTokenRow.style.display = 'none';
+        
+        // 뱃지 상태 변경
+        aagagBadge.className = 'badge need-auth-badge';
+        aagagBadge.textContent = '인증 필요';
+      }
+    }
+
+    // Save Credentials to LocalStorage
+    function saveConfig() {
+      let repo = repoInput.value.trim();
+      const token = tokenInput.value.trim();
+      
+      if (!repo || !token) {
+        showToast('저장소 경로와 토큰을 모두 입력해 주세요.', 'danger');
+        return;
+      }
+      
+      if (repo.includes('github.com')) {
+        const parts = repo.replace('https://github.com/', '')
+                          .replace('http://github.com/', '')
+                          .replace('git@github.com:', '')
+                          .replace('.git', '')
+                          .split('/');
+        if (parts.length >= 2) {
+          repo = `${parts[0]}/${parts[1]}`;
+        }
+      }
+      
+      localStorage.setItem('github_token', token);
+      localStorage.setItem('github_repo', repo);
+      
+      showToast('인증 설정이 저장되었습니다.');
+      loadSavedConfig();
+    }
+
+    // Reset Credentials
+    function resetConfig() {
+      localStorage.removeItem('github_token');
+      localStorage.removeItem('github_repo');
+      
+      repoInput.value = 'SuperLeeK/rss';
+      tokenInput.value = '';
+      
+      showToast('설정이 초기화되었습니다.');
+      loadSavedConfig();
+    }
+  </script>
 </body>
 </html>
