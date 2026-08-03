@@ -137,7 +137,7 @@
     }
 
     input[type="text"], input[type="password"], select {
-      flex: 1;
+      width: 100%;
       background: rgba(15, 23, 42, 0.6);
       border: 1px solid var(--card-border);
       border-radius: 8px;
@@ -146,6 +146,10 @@
       font-family: inherit;
       font-size: 0.9rem;
       transition: all 0.2s ease;
+    }
+    .input-row input[type="text"], .input-row input[type="password"] {
+      width: auto;
+      flex: 1;
     }
     input[type="text"]:focus, input[type="password"]:focus, select:focus {
       outline: none;
