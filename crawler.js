@@ -1,16 +1,19 @@
 import { chromium } from 'playwright';
 
 /**
- * AAGAG 미러 사이트에서 특정 키워드의 검색 결과를 크롤링하여 기사 목록을 반환합니다.
+ * 특정 사이트 설정에 따라 검색 결과를 크롤링하여 기사 목록을 반환합니다.
+ * @param {Object} siteConfig 크롤링 설정 객체 (targetUrlTemplate, listSelector, itemSelector, titleSelector, linkSelector 등)
  * @param {string} keyword 크롤링할 검색 키워드
  * @returns {Promise<Array<{title: string, link: string, id: string}>>}
  */
-export async function scrapeAagag(keyword) {
-  if (!keyword) {
-    throw new Error('Keyword is required for scraping AAGAG');
+export async function scrapeSite(siteConfig, keyword) {
+  if (!siteConfig || !keyword) {
+    throw new Error('siteConfig and keyword are required for scraping');
   }
   
-  console.log(`Starting Playwright crawler for AAGAG with keyword: "${keyword}"`);
+  const { name, targetUrlTemplate, listSelector, itemSelector, titleSelector, linkSelector } = siteConfig;
+  
+  console.log(`Starting Playwright crawler for ${name || 'Site'} with keyword: "${keyword}"`);
   const browser = await chromium.launch({
     headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox']
@@ -22,8 +25,9 @@ export async function scrapeAagag(keyword) {
     });
     const page = await context.newPage();
     
+    // URL 템플릿에 키워드 주입
     const encodedKeyword = encodeURIComponent(keyword);
-    const targetUrl = `https://aagag.com/mirror/?word=${encodedKeyword}`;
+    const targetUrl = targetUrlTemplate.replace('${keyword}', encodedKeyword);
     console.log(`Navigating to: ${targetUrl}`);
     
     await page.goto(targetUrl, {
@@ -31,22 +35,27 @@ export async function scrapeAagag(keyword) {
       timeout: 30000
     });
     
-    // 테이블 및 기사 목록 로딩 대기
-    console.log('Waiting for table.aalist to load...');
-    await page.waitForSelector('table.aalist', { timeout: 15000 });
+    // 목록 영역 대기
+    if (listSelector) {
+      console.log(`Waiting for list selector: "${listSelector}" to load...`);
+      await page.waitForSelector(listSelector, { timeout: 15000 });
+    }
     
-    // 브라우저 컨텍스트 내에서 데이터 추출
-    const articles = await page.evaluate(() => {
-      const elements = document.querySelectorAll('table.aalist > tbody > tr > td > a.article');
+    // 브라우저 컨텍스트 내에서 기사 정보 추출
+    const articles = await page.evaluate(({ itemSelector, titleSelector, linkSelector }) => {
+      const elements = document.querySelectorAll(itemSelector);
       const results = [];
       
       elements.forEach(el => {
-        const href = el.getAttribute('href');
-        const titleSpan = el.querySelector('span.title');
-        const title = titleSpan ? titleSpan.textContent.trim() : '';
+        // 타이틀 엘리먼트 추출 (선택자가 없으면 아이템 본인 사용)
+        const titleEl = titleSelector ? el.querySelector(titleSelector) : el;
+        const title = titleEl ? titleEl.textContent.trim() : '';
         
-        if (href && title) {
-          // 상대 경로인 경우 현재 페이지 주소를 기준으로 절대 경로로 변환
+        // 링크 엘리먼트 추출 (선택자가 없으면 아이템 본인의 href 사용)
+        const linkEl = linkSelector ? el.querySelector(linkSelector) : el;
+        const href = linkEl ? linkEl.getAttribute('href') : '';
+        
+        if (title && href) {
           const absoluteUrl = href.startsWith('http') 
             ? href 
             : new URL(href, window.location.href).href;
@@ -54,18 +63,18 @@ export async function scrapeAagag(keyword) {
           results.push({
             title,
             link: absoluteUrl,
-            id: absoluteUrl // 고유 식별자로 링크 주소 사용
+            id: absoluteUrl
           });
         }
       });
       
       return results;
-    });
+    }, { itemSelector, titleSelector, linkSelector });
     
-    console.log(`Successfully scraped ${articles.length} articles.`);
+    console.log(`Successfully scraped ${articles.length} articles from ${name || 'Site'}.`);
     return articles;
   } catch (error) {
-    console.error('Error during scraping AAGAG:', error);
+    console.error(`Error during scraping ${name || 'Site'}:`, error);
     throw error;
   } finally {
     await browser.close();

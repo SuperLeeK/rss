@@ -1,0 +1,29 @@
+[
+  {
+    "id": "aagag",
+    "name": "AAGAG RSS",
+    "description": "AAGAG 미러 게시판의 키워드 검색 결과를 실시간으로 모니터링하고 RSS 피드를 발급합니다.",
+    "targetUrlTemplate": "https://aagag.com/mirror/?word=${keyword}",
+    "listSelector": "table.aalist",
+    "itemSelector": "table.aalist > tbody > tr > td > a.article",
+    "titleSelector": "span.title",
+    "linkSelector": "",
+    "intervalMinutes": 120,
+    "keywords": [
+      "ㅎㅂ",
+      "유머"
+    ]
+  },
+  {
+    "id": "inven",
+    "name": "Inven RSS",
+    "description": "인벤 자유게시판 및 특정 게임 게시판의 실시간 키워드 피드 자동 수집 대시보드입니다.",
+    "targetUrlTemplate": "https://www.inven.co.kr/board/powerbbs.php?query=list&p=1&name=subject&keyword=${keyword}",
+    "listSelector": ".board-list",
+    "itemSelector": ".board-list tr.sj",
+    "titleSelector": "td.sj a",
+    "linkSelector": "td.sj a",
+    "intervalMinutes": 120,
+    "keywords": []
+  }
+]

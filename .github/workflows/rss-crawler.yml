@@ -1,11 +1,11 @@
-name: AAGAG RSS Crawler
+name: Community RSS Crawler
 
 on:
   push:
     paths:
-      - 'aagag/keywords.json' # 웹 대시보드 등에서 키워드가 추가/삭제되었을 때 즉시 실행
+      - 'config.json' # 웹 대시보드 등에서 설정이 변경되었을 때 즉시 실행
   schedule:
-    - cron: '0 */2 * * *' # 매 2시간마다 자동 실행
+    - cron: '*/30 * * * *' # 매 30분마다 자동 실행
   workflow_dispatch: # Github 웹 UI에서 수동 실행 가능
 
 jobs:
@@ -37,7 +37,7 @@ jobs:
         run: |
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git add aagag/
+          git add .
           
           # 변경된 사항이 있을 때만 커밋 및 푸시 수행 (에러 방지)
           if ! git diff --cached --quiet; then
