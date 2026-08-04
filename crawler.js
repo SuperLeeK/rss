@@ -49,7 +49,13 @@ export async function scrapeSite(siteConfig, keyword) {
       elements.forEach(el => {
         // 타이틀 엘리먼트 추출 (선택자가 없으면 아이템 본인 사용)
         const titleEl = titleSelector ? el.querySelector(titleSelector) : el;
-        const title = titleEl ? titleEl.textContent.trim() : '';
+        let title = '';
+        if (titleEl) {
+          const clone = titleEl.cloneNode(true);
+          // 하위 불필요한 메타 레이어 및 부가 정보 태그 제거 (.btmlayer 등)
+          clone.querySelectorAll('.btmlayer, .byte, .hit, .good, .time, script, style').forEach(subEl => subEl.remove());
+          title = clone.textContent.trim();
+        }
         
         // 링크 엘리먼트 추출 (선택자가 없으면 아이템 본인의 href 사용)
         const linkEl = linkSelector ? el.querySelector(linkSelector) : el;

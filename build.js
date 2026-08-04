@@ -17,8 +17,22 @@ function extractItemLinksFromXml(xmlContent) {
   return links;
 }
 
+function parseKeywordItem(item, defaultInterval) {
+  if (typeof item === 'object' && item !== null) {
+    const name = item.keyword || item.name || '';
+    const intervalMinutes = typeof item.intervalMinutes === 'number' ? item.intervalMinutes : defaultInterval;
+    return { name, intervalMinutes };
+  }
+  return { name: String(item), intervalMinutes: defaultInterval };
+}
+
 async function build() {
+  const isDryRun = process.argv.includes('--dry-run');
+  const isForce = process.argv.includes('--force');
+
   console.log('Starting RSS build process with custom configs...');
+  if (isDryRun) console.log('>>> RUNNING IN DRY-RUN MODE (No files will be modified) <<<');
+  if (isForce) console.log('>>> RUNNING IN FORCE MODE (Ignoring intervals and content diffs) <<<');
   
   const configPath = path.join(process.cwd(), 'config.json');
   if (!fs.existsSync(configPath)) {
@@ -44,14 +58,16 @@ async function build() {
       fs.mkdirSync(outputDir, { recursive: true });
     }
     
-    const intervalMinutes = site.intervalMinutes || 120;
-    const keywords = site.keywords || [];
+    const siteDefaultInterval = site.intervalMinutes || 120;
+    const rawKeywords = site.keywords || [];
     
-    console.log(`Keywords for "${site.name}": ${JSON.stringify(keywords)} (Interval: ${intervalMinutes} mins)`);
+    console.log(`Raw Keywords for "${site.name}": ${JSON.stringify(rawKeywords)} (Site Default Interval: ${siteDefaultInterval} mins)`);
     
-    for (const keyword of keywords) {
+    for (const rawKw of rawKeywords) {
+      const { name: keyword, intervalMinutes } = parseKeywordItem(rawKw, siteDefaultInterval);
+      
       console.log(`\n--------------------------------------------`);
-      console.log(`Keyword: "${keyword}" in site "${site.name}"`);
+      console.log(`Keyword: "${keyword}" in site "${site.name}" (Interval: ${intervalMinutes} mins)`);
       
       const safeKeyword = sanitizeFilename(keyword);
       const encodedSafeKeyword = encodeURIComponent(safeKeyword);
@@ -59,7 +75,7 @@ async function build() {
       const outputPath = path.join(outputDir, `${safeKeyword}.xml`);
       
       // 스마트 주기 체크: 파일이 이미 존재하면 최종 수정 일시(mtime) 비교
-      if (fs.existsSync(outputPath)) {
+      if (!isForce && fs.existsSync(outputPath)) {
         try {
           const stats = fs.statSync(outputPath);
           const lastUpdated = stats.mtime;
@@ -79,11 +95,20 @@ async function build() {
         const articles = await scrapeSite(site, keyword);
         
         let hasChanges = true;
+        let addedLinks = [];
+        let removedLinks = [];
+        
         if (fs.existsSync(outputPath)) {
           try {
             const existingXml = fs.readFileSync(outputPath, 'utf-8');
             const existingLinks = extractItemLinksFromXml(existingXml);
             const newLinks = articles.map(a => a.link);
+            
+            const existingSet = new Set(existingLinks);
+            const newSet = new Set(newLinks);
+            
+            addedLinks = articles.filter(a => !existingSet.has(a.link));
+            removedLinks = existingLinks.filter(l => !newSet.has(l));
             
             if (existingLinks.length === newLinks.length && 
                 existingLinks.every((link, idx) => link === newLinks[idx])) {
@@ -94,7 +119,27 @@ async function build() {
           }
         }
         
-        if (!hasChanges) {
+        if (isDryRun) {
+          console.log(`\n=== [DRY-RUN] Diff Analysis for "${keyword}" ===`);
+          console.log(`Content Changed: ${hasChanges}`);
+          console.log(`Scraped Articles Count: ${articles.length}`);
+          if (addedLinks.length > 0) {
+            console.log(`[+] Added ${addedLinks.length} items:`);
+            addedLinks.forEach(item => console.log(`   + [${item.title}] (${item.link})`));
+          } else {
+            console.log(`[+] Added 0 items.`);
+          }
+          if (removedLinks.length > 0) {
+            console.log(`[-] Removed ${removedLinks.length} items:`);
+            removedLinks.forEach(link => console.log(`   - ${link}`));
+          } else {
+            console.log(`[-] Removed 0 items.`);
+          }
+          console.log(`[DRY-RUN] Skipping actual file modifications.\n`);
+          continue;
+        }
+        
+        if (!hasChanges && !isForce) {
           console.log(`No new articles scraped for "${keyword}". Skipping XML file write to prevent git conflicts.`);
           
           // 파일 내용 변화는 없지만 최종 갱신 타임스탬프를 갱신하기 위해 touch 처리

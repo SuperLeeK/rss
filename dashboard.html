@@ -447,15 +447,34 @@
 
     <!-- Keyword Management Card -->
     <div class="card" id="managerCard" style="display: none;">
-      <div class="section-header">
-        <h2>수집 키워드 리스트</h2>
-        <span class="badge" id="keywordCount">0</span>
+      <div class="section-header" style="flex-wrap: wrap; gap: 0.75rem;">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <h2>수집 키워드 리스트</h2>
+          <span class="badge" id="keywordCount">0</span>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+          <button class="btn-secondary" onclick="triggerWorkflow(false, true)" style="font-size: 0.8rem; padding: 0.4rem 0.8rem;" title="파일 수정 없이 크롤링 차이점만 테스트합니다">
+            <i class="fa-solid fa-vial"></i> Dry-Run 테스트
+          </button>
+          <button class="btn-primary" onclick="triggerWorkflow(true, false)" style="font-size: 0.8rem; padding: 0.4rem 0.8rem;" title="스마트 주기 및 변경여부를 무시하고 즉시 강제 수집/커밋합니다">
+            <i class="fa-solid fa-bolt"></i> ⚡ 강제 전체 갱신
+          </button>
+        </div>
       </div>
 
       <!-- Keyword Add Form -->
       <div class="form-group" style="margin-bottom: 1.5rem;">
-        <div class="input-row">
-          <input type="text" id="newKeywordInput" placeholder="새 수집 키워드 입력 (예: 유머, 인벤)">
+        <div class="input-row" style="flex-wrap: wrap; gap: 0.5rem;">
+          <input type="text" id="newKeywordInput" placeholder="새 수집 키워드 입력 (예: 유머, 인벤)" style="flex: 2; min-width: 180px;">
+          <select id="newKeywordInterval" style="flex: 1; min-width: 140px; background: rgba(15, 23, 42, 0.8);">
+            <option value="default">기본 주기 (사이트 주기)</option>
+            <option value="10">10분</option>
+            <option value="30">30분</option>
+            <option value="60">1시간 (60분)</option>
+            <option value="120">2시간 (120분)</option>
+            <option value="240">4시간 (240분)</option>
+            <option value="720">12시간 (720분)</option>
+          </select>
           <button class="btn-primary" id="addKeywordBtn"><i class="fa-solid fa-plus"></i> 추가</button>
         </div>
       </div>
@@ -513,7 +532,7 @@
           <input type="text" id="modalLinkSelector" placeholder="비워두면 아이템의 href 속성 자동 사용">
         </div>
         <div class="form-group">
-          <label>수집 주기 (Interval)</label>
+          <label>사이트 기본 수집 주기 (Default Interval)</label>
           <select id="modalInterval">
             <option value="10">10분</option>
             <option value="30">30분</option>
@@ -562,6 +581,7 @@
     
     const managerCard = document.getElementById('managerCard');
     const newKeywordInput = document.getElementById('newKeywordInput');
+    const newKeywordInterval = document.getElementById('newKeywordInterval');
     const addKeywordBtn = document.getElementById('addKeywordBtn');
     const loadingKeywords = document.getElementById('loadingKeywords');
     const keywordList = document.getElementById('keywordList');
@@ -717,12 +737,64 @@
       return name.replace(/[\/\\:\*\?"<>\|]/g, '_');
     }
 
-    // 5. Render keywords in HTML (3줄 표시 리포맷팅 요구사항 구현)
+    function parseKeyword(kw, defaultInterval) {
+      if (typeof kw === 'object' && kw !== null) {
+        const name = kw.keyword || kw.name || '';
+        const intervalMinutes = typeof kw.intervalMinutes === 'number' ? kw.intervalMinutes : defaultInterval;
+        return { name, intervalMinutes, isCustomInterval: true };
+      }
+      return { name: String(kw), intervalMinutes: defaultInterval, isCustomInterval: false };
+    }
+
+    // Trigger GitHub Actions Workflow (Force or Dry Run)
+    async function triggerWorkflow(force = false, dryRun = false) {
+      if (!CONFIG.token || !CONFIG.repo) {
+        showToast('GitHub 인증 정보가 없습니다. 포털 메인에서 먼저 설정해 주세요.', 'danger');
+        return;
+      }
+      
+      const actionTitle = force ? '⚡ 강제 전체 갱신' : (dryRun ? '🔍 Dry-Run 테스트' : '수집');
+      setOverlay(true, `${actionTitle} 요청 전달 중...`);
+      
+      try {
+        const response = await fetch(`https://api.github.com/repos/${CONFIG.repo}/actions/workflows/rss-crawler.yml/dispatches`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${CONFIG.token}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            ref: 'main',
+            inputs: {
+              force: force,
+              dry_run: dryRun
+            }
+          })
+        });
+        
+        setOverlay(false);
+        
+        if (response.ok || response.status === 204) {
+          showToast(`${actionTitle} 요청이 전달되었습니다! (GitHub Actions 가 곧 시작됩니다)`, 'success');
+        } else {
+          const errData = await response.json().catch(() => ({}));
+          showToast(`워크플로우 실행 실패 (HTTP ${response.status}): ${errData.message || ''}`, 'danger');
+        }
+      } catch (error) {
+        console.error(error);
+        setOverlay(false);
+        showToast(`워크플로우 트리거 에러: ${error.message}`, 'danger');
+      }
+    }
+
+    // 5. Render keywords in HTML
     function renderKeywords() {
       loadingKeywords.style.display = 'none';
       keywordList.innerHTML = '';
       
       const keywords = siteConfig.keywords || [];
+      const siteDefaultInterval = siteConfig.intervalMinutes || 120;
       
       if (keywords.length === 0) {
         keywordList.innerHTML = `
@@ -738,7 +810,8 @@
       
       keywordCount.textContent = keywords.length;
       
-      keywords.forEach((kw) => {
+      keywords.forEach((rawKw) => {
+        const { name: kw, intervalMinutes, isCustomInterval } = parseKeyword(rawKw, siteDefaultInterval);
         const item = document.createElement('div');
         item.className = 'keyword-item';
         
@@ -751,27 +824,40 @@
         // 정적 XML RSS 주소 매핑
         const rssUrl = `https://${owner}.github.io/${repoName}/${siteConfig.id}/${encodedSafeKw}.xml`;
         
-        // 키워드 이름, 주소, 날짜 총 3줄로 분할 렌더링
         item.innerHTML = `
-          <div class="keyword-info" style="display: flex; flex-direction: column; gap: 0.4rem; padding: 0.2rem 0; max-width: 85%;">
+          <div class="keyword-info" style="display: flex; flex-direction: column; gap: 0.4rem; padding: 0.2rem 0; max-width: 80%;">
             <!-- 1행: 키워드 이름 -->
-            <span class="keyword-name" style="font-size: 1.1rem; font-weight: 700; color: var(--text-main);">${kw}</span>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <span class="keyword-name" style="font-size: 1.1rem; font-weight: 700; color: var(--text-main);">${kw}</span>
+            </div>
             <!-- 2행: RSS URL -->
             <div class="keyword-url-row" style="font-size: 0.85rem; color: var(--neon-blue); cursor: pointer; word-break: break-all;" onclick="copyToClipboard('${rssUrl}')" title="클릭하여 주소 복사">
               <i class="fa-solid fa-link" style="margin-right: 4px;"></i>${rssUrl}
             </div>
-            <!-- 3행: 날짜 및 주기 정보 -->
-            <div class="keyword-meta-row" style="font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.8rem;">
+            <!-- 3행: 날짜 및 개별 주기 선택 -->
+            <div class="keyword-meta-row" style="font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap;">
               <span class="keyword-updated" id="updated-${encodedSafeKw}">
                 <i class="fa-regular fa-clock" style="margin-right: 4px;"></i>조회 중...
               </span>
               <span style="color: rgba(255, 255, 255, 0.15)">|</span>
-              <span>
-                <i class="fa-solid fa-rotate" style="margin-right: 4px; font-size: 0.75rem;"></i>주기: ${siteConfig.intervalMinutes}분
+              <span style="display: inline-flex; align-items: center; gap: 0.3rem;">
+                <i class="fa-solid fa-rotate" style="font-size: 0.75rem;"></i>주기:
+                <select style="background: rgba(15, 23, 42, 0.8); color: var(--text-main); border: 1px solid var(--card-border); border-radius: 6px; padding: 0.15rem 0.4rem; font-size: 0.75rem; font-family: inherit; cursor: pointer;" onchange="updateKeywordInterval('${kw}', this.value)">
+                  <option value="default" ${!isCustomInterval ? 'selected' : ''}>기본 (${siteDefaultInterval}분)</option>
+                  <option value="10" ${isCustomInterval && intervalMinutes === 10 ? 'selected' : ''}>10분</option>
+                  <option value="30" ${isCustomInterval && intervalMinutes === 30 ? 'selected' : ''}>30분</option>
+                  <option value="60" ${isCustomInterval && intervalMinutes === 60 ? 'selected' : ''}>1시간 (60분)</option>
+                  <option value="120" ${isCustomInterval && intervalMinutes === 120 ? 'selected' : ''}>2시간 (120분)</option>
+                  <option value="240" ${isCustomInterval && intervalMinutes === 240 ? 'selected' : ''}>4시간 (240분)</option>
+                  <option value="720" ${isCustomInterval && intervalMinutes === 720 ? 'selected' : ''}>12시간 (720분)</option>
+                </select>
               </span>
             </div>
           </div>
-          <div class="keyword-actions">
+          <div class="keyword-actions" style="display: flex; align-items: center; gap: 0.2rem;">
+            <button class="action-btn" onclick="triggerWorkflow(true, false)" style="background:none; border:none; color:var(--neon-blue); font-size:1.1rem; padding:0.4rem; cursor:pointer;" title="이 키워드 즉시 강제 수집">
+              <i class="fa-solid fa-bolt"></i>
+            </button>
             <button class="action-btn" onclick="copyToClipboard('${rssUrl}')" style="background:none; border:none; color:var(--text-muted); font-size:1rem; padding:0.4rem; cursor:pointer;" title="주소 복사">
               <i class="fa-solid fa-copy"></i>
             </button>
@@ -786,7 +872,8 @@
       keywordList.style.display = 'flex';
       
       // 각 키워드 업데이트 시각 비동기 호출
-      keywords.forEach(async (kw) => {
+      keywords.forEach(async (rawKw) => {
+        const { name: kw } = parseKeyword(rawKw, siteDefaultInterval);
         const safeKw = sanitizeFilename(kw);
         const encodedSafeKw = encodeURIComponent(safeKw);
         const updatedEl = document.getElementById(`updated-${encodedSafeKw}`);
@@ -904,6 +991,7 @@
     // 10. Add New Keyword
     function addNewKeyword() {
       const newKeyword = newKeywordInput.value.trim();
+      const intervalVal = newKeywordInterval ? newKeywordInterval.value : 'default';
       
       if (!newKeyword) {
         showToast('추가할 키워드를 입력하세요.', 'danger');
@@ -917,14 +1005,25 @@
       }
       
       const currentKeywords = siteConfig.keywords || [];
-      if (currentKeywords.includes(newKeyword)) {
+      const siteDefaultInterval = siteConfig.intervalMinutes || 120;
+      
+      const isDuplicate = currentKeywords.some(kw => {
+        const parsed = parseKeyword(kw, siteDefaultInterval);
+        return parsed.name === newKeyword;
+      });
+      
+      if (isDuplicate) {
         showToast('이미 등록된 키워드입니다.', 'danger');
         return;
       }
       
-      const updatedKeywords = [...currentKeywords, newKeyword];
+      let newEntry = newKeyword;
+      if (intervalVal !== 'default') {
+        newEntry = { keyword: newKeyword, intervalMinutes: parseInt(intervalVal) };
+      }
       
-      // sitesArray의 현재 대시보드 키워드 리스트 업데이트
+      const updatedKeywords = [...currentKeywords, newEntry];
+      
       const updatedSites = sitesArray.map(s => {
         if (s.id === currentSiteId) {
           return { ...s, keywords: updatedKeywords };
@@ -933,17 +1032,26 @@
       });
       
       newKeywordInput.value = '';
+      if (newKeywordInterval) newKeywordInterval.value = 'default';
       updateGithubFile(updatedSites, `"${newKeyword}" 키워드가 추가되었습니다!`);
     }
 
-    // 11. Delete Keyword
-    function deleteKeyword(kw) {
-      if (!confirm(`"${kw}" 키워드 수집을 정말 중단하시겠습니까?\n피드 파일도 다음 빌드 때 더 이상 갱신되지 않습니다.`)) {
-        return;
-      }
-      
+    // 11. Update Keyword Interval for existing keyword
+    function updateKeywordInterval(targetKwName, selectedVal) {
       const currentKeywords = siteConfig.keywords || [];
-      const updatedKeywords = currentKeywords.filter(item => item !== kw);
+      const siteDefaultInterval = siteConfig.intervalMinutes || 120;
+      
+      const updatedKeywords = currentKeywords.map(kw => {
+        const parsed = parseKeyword(kw, siteDefaultInterval);
+        if (parsed.name === targetKwName) {
+          if (selectedVal === 'default') {
+            return targetKwName;
+          } else {
+            return { keyword: targetKwName, intervalMinutes: parseInt(selectedVal) };
+          }
+        }
+        return kw;
+      });
       
       const updatedSites = sitesArray.map(s => {
         if (s.id === currentSiteId) {
@@ -952,7 +1060,31 @@
         return s;
       });
       
-      updateGithubFile(updatedSites, `"${kw}" 키워드가 삭제되었습니다.`);
+      updateGithubFile(updatedSites, `"${targetKwName}" 키워드의 수집 주기가 변경되었습니다!`);
+    }
+
+    // 12. Delete Keyword
+    function deleteKeyword(targetKwName) {
+      if (!confirm(`"${targetKwName}" 키워드 수집을 정말 중단하시겠습니까?\n피드 파일도 다음 빌드 때 더 이상 갱신되지 않습니다.`)) {
+        return;
+      }
+      
+      const currentKeywords = siteConfig.keywords || [];
+      const siteDefaultInterval = siteConfig.intervalMinutes || 120;
+      
+      const updatedKeywords = currentKeywords.filter(kw => {
+        const parsed = parseKeyword(kw, siteDefaultInterval);
+        return parsed.name !== targetKwName;
+      });
+      
+      const updatedSites = sitesArray.map(s => {
+        if (s.id === currentSiteId) {
+          return { ...s, keywords: updatedKeywords };
+        }
+        return s;
+      });
+      
+      updateGithubFile(updatedSites, `"${targetKwName}" 키워드가 삭제되었습니다.`);
     }
 
     // 12. Modal Control for Edit Settings
