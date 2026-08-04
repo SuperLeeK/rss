@@ -836,13 +836,13 @@
             </div>
             <!-- 3행: 날짜 및 개별 주기 선택 -->
             <div class="keyword-meta-row" style="font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap;">
-              <span class="keyword-updated" id="updated-${encodedSafeKw}">
+              <span class="keyword-updated" id="updated-${encodedSafeKw}" style="white-space: nowrap;">
                 <i class="fa-regular fa-clock" style="margin-right: 4px;"></i>조회 중...
               </span>
               <span style="color: rgba(255, 255, 255, 0.15)">|</span>
-              <span style="display: inline-flex; align-items: center; gap: 0.3rem;">
-                <i class="fa-solid fa-rotate" style="font-size: 0.75rem;"></i>주기:
-                <select style="background: rgba(15, 23, 42, 0.8); color: var(--text-main); border: 1px solid var(--card-border); border-radius: 6px; padding: 0.15rem 0.4rem; font-size: 0.75rem; font-family: inherit; cursor: pointer;" onchange="updateKeywordInterval('${kw}', this.value)">
+              <span style="display: inline-flex; align-items: center; gap: 0.3rem; white-space: nowrap;">
+                <i class="fa-solid fa-rotate" style="font-size: 0.75rem;"></i><span style="white-space: nowrap;">주기:</span>
+                <select style="background: rgba(15, 23, 42, 0.8); color: var(--text-main); border: 1px solid var(--card-border); border-radius: 6px; padding: 0.15rem 0.4rem; font-size: 0.75rem; font-family: inherit; cursor: pointer; white-space: nowrap;" onchange="updateKeywordInterval('${kw}', this.value)">
                   <option value="default" ${!isCustomInterval ? 'selected' : ''}>기본 (${siteDefaultInterval}분)</option>
                   <option value="10" ${isCustomInterval && intervalMinutes === 10 ? 'selected' : ''}>10분</option>
                   <option value="30" ${isCustomInterval && intervalMinutes === 30 ? 'selected' : ''}>30분</option>
