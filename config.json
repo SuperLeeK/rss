@@ -1,7 +1,7 @@
 [
   {
     "id": "aagag",
-    "name": "AAGAG RSS",
+    "name": "AAGAG REDIRECT RSS",
     "description": "AAGAG 미러 게시판의 키워드 검색 결과를 실시간으로 모니터링하고 RSS 피드를 발급합니다.",
     "targetUrlTemplate": "https://aagag.com/mirror/?word=${keyword}",
     "listSelector": "table.aalist",
