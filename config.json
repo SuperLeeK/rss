@@ -26,5 +26,17 @@
     "linkSelector": "td.sj a",
     "intervalMinutes": 120,
     "keywords": []
+  },
+  {
+    "id": "aagag_born",
+    "name": "AAGAG RSS",
+    "description": "",
+    "targetUrlTemplate": "https://aagag.com/issue/?word=${keyword}",
+    "listSelector": "table.aalist",
+    "itemSelector": "table.aalist > tbody > tr > td > a.article",
+    "titleSelector": "span.title",
+    "linkSelector": "",
+    "intervalMinutes": 120,
+    "keywords": []
   }
 ]
