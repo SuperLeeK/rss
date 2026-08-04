@@ -37,6 +37,8 @@
     "titleSelector": "span.title",
     "linkSelector": "",
     "intervalMinutes": 120,
-    "keywords": []
+    "keywords": [
+      "manhwa"
+    ]
   }
 ]
