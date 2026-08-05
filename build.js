@@ -7,6 +7,15 @@ function sanitizeFilename(name) {
   return name.replace(/[\/\\:\*\?"<>\|]/g, '_');
 }
 
+function extractLastBuildDateFromXml(xmlContent) {
+  const match = xmlContent.match(/<lastBuildDate>(.*?)<\/lastBuildDate>/);
+  if (match && match[1]) {
+    const d = new Date(match[1]);
+    if (!isNaN(d.getTime())) return d;
+  }
+  return null;
+}
+
 function extractItemLinksFromXml(xmlContent) {
   const links = [];
   const itemRegex = /<item>[\s\S]*?<link>(.*?)<\/link>[\s\S]*?<\/item>/g;
@@ -74,20 +83,22 @@ async function build() {
       const encodedKeyword = encodeURIComponent(keyword);
       const outputPath = path.join(outputDir, `${safeKeyword}.xml`);
       
-      // 스마트 주기 체크: 파일이 이미 존재하면 최종 수정 일시(mtime) 비교
+      // 스마트 주기 체크: 파일이 이미 존재하면 XML 내 lastBuildDate 비교 (GitHub Actions checkout 시 mtime 초기화 문제 해결)
       if (!isForce && fs.existsSync(outputPath)) {
         try {
-          const stats = fs.statSync(outputPath);
-          const lastUpdated = stats.mtime;
-          const diffMs = Date.now() - lastUpdated.getTime();
-          const diffMins = Math.floor(diffMs / 1000 / 60);
-          
-          if (diffMins < intervalMinutes) {
-            console.log(`[Skip] "${keyword}" RSS was updated ${diffMins} minutes ago. (Required interval: ${intervalMinutes} mins). Skipping crawl.`);
-            continue;
+          const xmlContent = fs.readFileSync(outputPath, 'utf-8');
+          const lastBuildDate = extractLastBuildDateFromXml(xmlContent);
+          if (lastBuildDate) {
+            const diffMs = Date.now() - lastBuildDate.getTime();
+            const diffMins = Math.floor(diffMs / 1000 / 60);
+            
+            if (diffMins < intervalMinutes) {
+              console.log(`[Skip] "${keyword}" RSS was built ${diffMins} minutes ago (lastBuildDate: ${lastBuildDate.toISOString()}). Required interval: ${intervalMinutes} mins. Skipping crawl.`);
+              continue;
+            }
           }
         } catch (statErr) {
-          console.warn(`Failed to read file stats for "${keyword}". Scraping anyway.`, statErr);
+          console.warn(`Failed to read XML for interval check on "${keyword}". Scraping anyway.`, statErr);
         }
       }
       
